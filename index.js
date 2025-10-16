@@ -27,12 +27,16 @@ app.get("/me", limiter, async (req, res) => {
   const response = await axios.get("https://catfact.ninja/fact", {
     timeout: 1000 * 5,
   });
-  
+
+  if(response.status !== 200) {
+    return res.status(500),json({ status: "error", message: "Cats API failed" });
+  } 
+
   res.json({
     status: "success",
     user: { ...profile },
     timestamp: Date.now(),
-    fact: response.data.fact || "Cats are fun to play with",
+    fact: response.data.fact,
   });
 });
 
