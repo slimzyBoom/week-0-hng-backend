@@ -20,24 +20,35 @@ const profile = {
 const limiter = rateLimit({
   windowMs: 1000 * 60 * 15,
   limit: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: { status: "error", message: "Too many request please try again" },
 });
 
-app.get("/me", limiter, async (req, res) => {
-  const response = await axios.get("https://catfact.ninja/fact", {
+app.use(limiter);
+
+app.get("/me", async (req, res) => {
+ try {
+   const response = await axios.get("https://catfact.ninja/fact", {
     timeout: 1000 * 5,
   });
 
-  if(response.status !== 200) {
-    return res.status(500),json({ status: "error", message: "Cats API failed" });
-  } 
+  if (response.status !== 200) {
+    return (
+      res.status(500), json({ status: "error", message: "Cats API failed" })
+    );
+  }
 
   res.json({
     status: "success",
     user: { ...profile },
-    timestamp: Date.now(),
+    timestamp: new Date().toISOString(),
     fact: response.data.fact,
   });
+ } catch (error) {
+  console.error(error.message);
+   res.status(500).json({ status: "error", message: "Internal Server Error" });
+ }
 });
 
 app.listen(PORT, () => console.log(`Server is running on port ${PORT}`));
